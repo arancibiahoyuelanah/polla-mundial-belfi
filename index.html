@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Resultados Online - Polla Mundial Belfi</title>
 
   <style>
@@ -68,7 +69,7 @@
     .card strong {
       display: block;
       margin-top: 8px;
-      font-size: 28px;
+      font-size: 26px;
     }
 
     .filters {
@@ -247,6 +248,7 @@
       "Scotland": "Escocia",
       "Australia": "Australia",
       "Turkey": "Turquía",
+      "Türkiye": "Turquía",
       "Germany": "Alemania",
       "Curaçao": "Curazao",
       "Curacao": "Curazao",
@@ -292,7 +294,9 @@
     function obtenerNombreEquipo(equipo) {
       if (!equipo) return "Por definir";
 
-      if (typeof equipo === "string") return traducirEquipo(equipo);
+      if (typeof equipo === "string") {
+        return traducirEquipo(equipo);
+      }
 
       return traducirEquipo(
         equipo.name ||
@@ -317,7 +321,7 @@
     }
 
     function obtenerFecha(match) {
-      const valor = match.date || match.datetime || match.time || match.utcDate || "";
+      const valor = match.date || match.datetime || match.utcDate || "";
 
       if (!valor) return "-";
 
@@ -338,7 +342,9 @@
 
       if (!valor) return "-";
 
-      if (/^\d{1,2}:\d{2}/.test(valor)) return valor;
+      if (/^\d{1,2}:\d{2}/.test(valor)) {
+        return valor;
+      }
 
       const fecha = new Date(valor);
 
@@ -346,7 +352,8 @@
 
       return fecha.toLocaleTimeString("es-CL", {
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
+        hour12: false
       });
     }
 
@@ -391,7 +398,9 @@
       if (!obj || typeof obj !== "object") return false;
 
       const tieneTeam1Team2 = obj.team1 && obj.team2;
-      const tieneHomeAway = (obj.home || obj.home_team || obj.homeTeam) && (obj.away || obj.away_team || obj.awayTeam);
+      const tieneHomeAway =
+        (obj.home || obj.home_team || obj.homeTeam) &&
+        (obj.away || obj.away_team || obj.awayTeam);
 
       return tieneTeam1Team2 || tieneHomeAway;
     }
@@ -440,7 +449,28 @@
     }
 
     function estaJugado(partido) {
-      return partido.gl !== null && partido.gv !== null && partido.gl !== "" && partido.gv !== "";
+      return partido.gl !== null &&
+             partido.gv !== null &&
+             partido.gl !== "" &&
+             partido.gv !== "";
+    }
+
+    function actualizarFechaHora() {
+      const ahora = new Date();
+
+      const fecha = ahora.toLocaleDateString("es-CL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      });
+
+      const hora = ahora.toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+
+      document.getElementById("ultimaLectura").textContent = fecha + " " + hora;
     }
 
     function render() {
@@ -462,6 +492,7 @@
         const resultado = jugado ? `${p.gl} - ${p.gv}` : "-";
 
         const tr = document.createElement("tr");
+
         tr.innerHTML = `
           <td>${p.n}</td>
           <td>${p.grupo}</td>
@@ -474,6 +505,7 @@
             ${jugado ? "Jugado" : "Pendiente"}
           </td>
         `;
+
         tbody.appendChild(tr);
       });
 
@@ -495,7 +527,9 @@
 
     async function cargarResultados() {
       try {
-        const response = await fetch(FUENTE, { cache: "no-store" });
+        const response = await fetch(FUENTE + "?cacheBust=" + Date.now(), {
+          cache: "no-store"
+        });
 
         if (!response.ok) {
           throw new Error("No se pudo leer la fuente online.");
@@ -511,21 +545,7 @@
 
         partidos.sort((a, b) => Number(a.n) - Number(b.n));
 
-        const ahora = new Date();
-
-        document.getElementById("ultimaLectura").textContent =
-          ahora.toLocaleDateString("es-CL", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-          }) +
-          " " +
-          ahora.toLocaleTimeString("es-CL", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-          });
-
+        actualizarFechaHora();
         render();
 
       } catch (error) {
@@ -533,10 +553,12 @@
 
         const errorBox = document.getElementById("errorBox");
         errorBox.style.display = "block";
-        errorBox.textContent = "No se pudo cargar la información online desde OpenFootball. Puede ser por estructura distinta del JSON, bloqueo temporal o fuente sin datos.";
+        errorBox.textContent = "No se pudo cargar la información online desde OpenFootball.";
 
         document.getElementById("tablaResultados").innerHTML =
           `<tr><td colspan="8">Error cargando datos online.</td></tr>`;
+
+        actualizarFechaHora();
       }
     }
 
