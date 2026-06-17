@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resultados Oficiales - Polla Mundial Belfi</title>
+  <title>Resultados Online - Polla Mundial Belfi</title>
 
   <style>
     body {
@@ -34,6 +34,16 @@
       max-width: 1200px;
       margin: 24px auto;
       padding: 0 16px;
+    }
+
+    .notice {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      font-size: 14px;
     }
 
     .cards {
@@ -127,6 +137,15 @@
       font-weight: bold;
     }
 
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
     footer {
       text-align: center;
       padding: 24px;
@@ -138,11 +157,17 @@
 
 <body>
   <header>
-    <h1>Resultados Oficiales</h1>
-    <p>Polla Mundial Belfi · Primera fase</p>
+    <h1>Resultados Online</h1>
+    <p>Polla Mundial Belfi · Datos desde OpenFootball</p>
   </header>
 
   <main>
+    <div class="notice">
+      Fuente online: OpenFootball. Si la fuente aún no tiene marcadores cargados, los partidos aparecerán como pendientes.
+    </div>
+
+    <div id="errorBox" class="error"></div>
+
     <section class="cards">
       <div class="card">
         <span>Total partidos</span>
@@ -160,8 +185,8 @@
       </div>
 
       <div class="card">
-        <span>Última actualización</span>
-        <strong>17/06/2026</strong>
+        <span>Última lectura</span>
+        <strong id="ultimaLectura">-</strong>
       </div>
     </section>
 
@@ -185,96 +210,237 @@
             <th>Estado</th>
           </tr>
         </thead>
-        <tbody id="tablaResultados"></tbody>
+        <tbody id="tablaResultados">
+          <tr>
+            <td colspan="8">Cargando resultados online...</td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </main>
 
   <footer>
-    Fuente: Resultados Oficiales Polla Mundial 2026 · Página simple inicial
+    Polla Mundial Belfi · Página conectada a OpenFootball
   </footer>
 
   <script>
-    const partidos = [
-      { n: 1, grupo: "A", fecha: "11-jun", hora: "15:00", local: "México", gl: 2, gv: 0, visita: "Sudáfrica" },
-      { n: 2, grupo: "A", fecha: "11-jun", hora: "22:00", local: "Corea del Sur", gl: 2, gv: 1, visita: "Repúb. Checa" },
-      { n: 3, grupo: "B", fecha: "12-jun", hora: "15:00", local: "Canadá", gl: 1, gv: 1, visita: "Bosnia y Herzeg." },
-      { n: 4, grupo: "D", fecha: "12-jun", hora: "21:00", local: "EE. UU.", gl: 4, gv: 1, visita: "Paraguay" },
-      { n: 5, grupo: "B", fecha: "13-jun", hora: "15:00", local: "Qatar", gl: 1, gv: 1, visita: "Suiza" },
-      { n: 6, grupo: "C", fecha: "13-jun", hora: "18:00", local: "Brasil", gl: 1, gv: 1, visita: "Marruecos" },
-      { n: 7, grupo: "C", fecha: "13-jun", hora: "21:00", local: "Haití", gl: 0, gv: 1, visita: "Escocia" },
-      { n: 8, grupo: "D", fecha: "14-jun", hora: "0:00", local: "Australia", gl: 2, gv: 0, visita: "Turquía" },
-      { n: 9, grupo: "E", fecha: "14-jun", hora: "13:00", local: "Alemania", gl: 7, gv: 1, visita: "Curazao" },
-      { n: 10, grupo: "E", fecha: "14-jun", hora: "19:00", local: "Costa de Marfil", gl: 1, gv: 0, visita: "Ecuador" },
-      { n: 11, grupo: "F", fecha: "14-jun", hora: "16:00", local: "Países Bajos", gl: 2, gv: 2, visita: "Japón" },
-      { n: 12, grupo: "F", fecha: "14-jun", hora: "22:00", local: "Suecia", gl: 5, gv: 1, visita: "Túnez" },
-      { n: 13, grupo: "G", fecha: "15-jun", hora: "15:00", local: "Bélgica", gl: 1, gv: 1, visita: "Egipto" },
-      { n: 14, grupo: "G", fecha: "15-jun", hora: "21:00", local: "Irán", gl: 2, gv: 2, visita: "Nueva Zelanda" },
-      { n: 15, grupo: "H", fecha: "15-jun", hora: "12:00", local: "España", gl: 0, gv: 0, visita: "Cabo Verde" },
-      { n: 16, grupo: "H", fecha: "15-jun", hora: "18:00", local: "Arabia Saudita", gl: 1, gv: 1, visita: "Uruguay" },
-      { n: 17, grupo: "I", fecha: "16-jun", hora: "15:00", local: "Francia", gl: 3, gv: 1, visita: "Senegal" },
-      { n: 18, grupo: "I", fecha: "16-jun", hora: "18:00", local: "Irak", gl: 1, gv: 4, visita: "Noruega" },
-      { n: 19, grupo: "J", fecha: "16-jun", hora: "21:00", local: "Argentina", gl: 3, gv: 0, visita: "Argelia" },
-      { n: 20, grupo: "J", fecha: "17-jun", hora: "0:00", local: "Austria", gl: 3, gv: 1, visita: "Jordania" },
+    const FUENTE = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
 
-      { n: 21, grupo: "K", fecha: "17-jun", hora: "13:00", local: "Portugal", gl: null, gv: null, visita: "R. D. del Congo" },
-      { n: 22, grupo: "K", fecha: "17-jun", hora: "22:00", local: "Uzbekistán", gl: null, gv: null, visita: "Colombia" },
-      { n: 23, grupo: "L", fecha: "17-jun", hora: "16:00", local: "Inglaterra", gl: null, gv: null, visita: "Croacia" },
-      { n: 24, grupo: "L", fecha: "17-jun", hora: "19:00", local: "Ghana", gl: null, gv: null, visita: "Panamá" },
-      { n: 25, grupo: "A", fecha: "18-jun", hora: "12:00", local: "Repúb. Checa", gl: null, gv: null, visita: "Sudáfrica" },
-      { n: 26, grupo: "A", fecha: "18-jun", hora: "21:00", local: "México", gl: null, gv: null, visita: "Corea del Sur" },
-      { n: 27, grupo: "B", fecha: "18-jun", hora: "15:00", local: "Suiza", gl: null, gv: null, visita: "Bosnia y Herzeg." },
-      { n: 28, grupo: "B", fecha: "18-jun", hora: "18:00", local: "Canadá", gl: null, gv: null, visita: "Qatar" },
-      { n: 29, grupo: "C", fecha: "19-jun", hora: "18:00", local: "Escocia", gl: null, gv: null, visita: "Marruecos" },
-      { n: 30, grupo: "C", fecha: "19-jun", hora: "20:30", local: "Brasil", gl: null, gv: null, visita: "Haití" },
-      { n: 31, grupo: "D", fecha: "19-jun", hora: "23:00", local: "Turquía", gl: null, gv: null, visita: "Paraguay" },
-      { n: 32, grupo: "D", fecha: "19-jun", hora: "15:00", local: "EE. UU.", gl: null, gv: null, visita: "Australia" },
-      { n: 33, grupo: "E", fecha: "20-jun", hora: "16:00", local: "Alemania", gl: null, gv: null, visita: "Costa de Marfil" },
-      { n: 34, grupo: "E", fecha: "20-jun", hora: "20:00", local: "Ecuador", gl: null, gv: null, visita: "Curazao" },
-      { n: 35, grupo: "F", fecha: "20-jun", hora: "13:00", local: "Países Bajos", gl: null, gv: null, visita: "Suecia" },
-      { n: 36, grupo: "F", fecha: "21-jun", hora: "0:00", local: "Túnez", gl: null, gv: null, visita: "Japón" },
-      { n: 37, grupo: "G", fecha: "21-jun", hora: "15:00", local: "Bélgica", gl: null, gv: null, visita: "Irán" },
-      { n: 38, grupo: "G", fecha: "21-jun", hora: "21:00", local: "Nueva Zelanda", gl: null, gv: null, visita: "Egipto" },
-      { n: 39, grupo: "H", fecha: "21-jun", hora: "12:00", local: "España", gl: null, gv: null, visita: "Arabia Saudita" },
-      { n: 40, grupo: "H", fecha: "21-jun", hora: "18:00", local: "Uruguay", gl: null, gv: null, visita: "Cabo Verde" },
-      { n: 41, grupo: "I", fecha: "22-jun", hora: "17:00", local: "Francia", gl: null, gv: null, visita: "Irak" },
-      { n: 42, grupo: "I", fecha: "22-jun", hora: "20:00", local: "Noruega", gl: null, gv: null, visita: "Senegal" },
-      { n: 43, grupo: "J", fecha: "22-jun", hora: "13:00", local: "Argentina", gl: null, gv: null, visita: "Austria" },
-      { n: 44, grupo: "J", fecha: "22-jun", hora: "23:00", local: "Jordania", gl: null, gv: null, visita: "Argelia" },
-      { n: 45, grupo: "K", fecha: "23-jun", hora: "13:00", local: "Portugal", gl: null, gv: null, visita: "Uzbekistán" },
-      { n: 46, grupo: "K", fecha: "23-jun", hora: "22:00", local: "Colombia", gl: null, gv: null, visita: "R. D. del Congo" },
-      { n: 47, grupo: "L", fecha: "23-jun", hora: "16:00", local: "Inglaterra", gl: null, gv: null, visita: "Ghana" },
-      { n: 48, grupo: "L", fecha: "23-jun", hora: "19:00", local: "Panamá", gl: null, gv: null, visita: "Croacia" },
-      { n: 49, grupo: "A", fecha: "24-jun", hora: "21:00", local: "Repúb. Checa", gl: null, gv: null, visita: "México" },
-      { n: 50, grupo: "A", fecha: "24-jun", hora: "21:00", local: "Sudáfrica", gl: null, gv: null, visita: "Corea del Sur" },
-      { n: 51, grupo: "B", fecha: "24-jun", hora: "15:00", local: "Suiza", gl: null, gv: null, visita: "Canadá" },
-      { n: 52, grupo: "B", fecha: "24-jun", hora: "15:00", local: "Bosnia y Herzeg.", gl: null, gv: null, visita: "Qatar" },
-      { n: 53, grupo: "C", fecha: "24-jun", hora: "18:00", local: "Escocia", gl: null, gv: null, visita: "Brasil" },
-      { n: 54, grupo: "C", fecha: "24-jun", hora: "18:00", local: "Marruecos", gl: null, gv: null, visita: "Haití" },
-      { n: 55, grupo: "D", fecha: "25-jun", hora: "22:00", local: "Turquía", gl: null, gv: null, visita: "EE. UU." },
-      { n: 56, grupo: "D", fecha: "25-jun", hora: "22:00", local: "Paraguay", gl: null, gv: null, visita: "Australia" },
-      { n: 57, grupo: "E", fecha: "25-jun", hora: "16:00", local: "Ecuador", gl: null, gv: null, visita: "Alemania" },
-      { n: 58, grupo: "E", fecha: "25-jun", hora: "16:00", local: "Curazao", gl: null, gv: null, visita: "Costa de Marfil" },
-      { n: 59, grupo: "F", fecha: "25-jun", hora: "19:00", local: "Japón", gl: null, gv: null, visita: "Suecia" },
-      { n: 60, grupo: "F", fecha: "25-jun", hora: "19:00", local: "Túnez", gl: null, gv: null, visita: "Países Bajos" },
-      { n: 61, grupo: "G", fecha: "26-jun", hora: "23:00", local: "Egipto", gl: null, gv: null, visita: "Irán" },
-      { n: 62, grupo: "G", fecha: "26-jun", hora: "23:00", local: "Nueva Zelanda", gl: null, gv: null, visita: "Bélgica" },
-      { n: 63, grupo: "H", fecha: "26-jun", hora: "20:00", local: "Uruguay", gl: null, gv: null, visita: "España" },
-      { n: 64, grupo: "H", fecha: "26-jun", hora: "20:00", local: "Cabo Verde", gl: null, gv: null, visita: "Arabia Saudita" },
-      { n: 65, grupo: "I", fecha: "26-jun", hora: "15:00", local: "Noruega", gl: null, gv: null, visita: "Francia" },
-      { n: 66, grupo: "I", fecha: "26-jun", hora: "15:00", local: "Senegal", gl: null, gv: null, visita: "Irak" },
-      { n: 67, grupo: "J", fecha: "27-jun", hora: "22:00", local: "Jordania", gl: null, gv: null, visita: "Argentina" },
-      { n: 68, grupo: "J", fecha: "27-jun", hora: "22:00", local: "Argelia", gl: null, gv: null, visita: "Austria" },
-      { n: 69, grupo: "K", fecha: "27-jun", hora: "19:30", local: "Colombia", gl: null, gv: null, visita: "Portugal" },
-      { n: 70, grupo: "K", fecha: "27-jun", hora: "19:30", local: "R. D. del Congo", gl: null, gv: null, visita: "Uzbekistán" },
-      { n: 71, grupo: "L", fecha: "27-jun", hora: "17:00", local: "Panamá", gl: null, gv: null, visita: "Inglaterra" },
-      { n: 72, grupo: "L", fecha: "27-jun", hora: "17:00", local: "Croacia", gl: null, gv: null, visita: "Ghana" }
-    ];
-
+    let partidos = [];
     let filtroActual = "todos";
 
+    const traducciones = {
+      "Mexico": "México",
+      "South Africa": "Sudáfrica",
+      "Korea Republic": "Corea del Sur",
+      "South Korea": "Corea del Sur",
+      "Czech Republic": "Repúb. Checa",
+      "Bosnia and Herzegovina": "Bosnia y Herzeg.",
+      "United States": "EE. UU.",
+      "USA": "EE. UU.",
+      "Paraguay": "Paraguay",
+      "Qatar": "Qatar",
+      "Switzerland": "Suiza",
+      "Brazil": "Brasil",
+      "Morocco": "Marruecos",
+      "Haiti": "Haití",
+      "Scotland": "Escocia",
+      "Australia": "Australia",
+      "Turkey": "Turquía",
+      "Germany": "Alemania",
+      "Curaçao": "Curazao",
+      "Curacao": "Curazao",
+      "Côte d'Ivoire": "Costa de Marfil",
+      "Ivory Coast": "Costa de Marfil",
+      "Ecuador": "Ecuador",
+      "Netherlands": "Países Bajos",
+      "Japan": "Japón",
+      "Sweden": "Suecia",
+      "Tunisia": "Túnez",
+      "Belgium": "Bélgica",
+      "Egypt": "Egipto",
+      "Iran": "Irán",
+      "New Zealand": "Nueva Zelanda",
+      "Spain": "España",
+      "Cape Verde": "Cabo Verde",
+      "Saudi Arabia": "Arabia Saudita",
+      "Uruguay": "Uruguay",
+      "France": "Francia",
+      "Senegal": "Senegal",
+      "Iraq": "Irak",
+      "Norway": "Noruega",
+      "Argentina": "Argentina",
+      "Algeria": "Argelia",
+      "Austria": "Austria",
+      "Jordan": "Jordania",
+      "Portugal": "Portugal",
+      "DR Congo": "R. D. del Congo",
+      "Congo DR": "R. D. del Congo",
+      "Uzbekistan": "Uzbekistán",
+      "Colombia": "Colombia",
+      "England": "Inglaterra",
+      "Croatia": "Croacia",
+      "Ghana": "Ghana",
+      "Panama": "Panamá"
+    };
+
+    function traducirEquipo(nombre) {
+      if (!nombre) return "Por definir";
+      return traducciones[nombre] || nombre;
+    }
+
+    function obtenerNombreEquipo(equipo) {
+      if (!equipo) return "Por definir";
+
+      if (typeof equipo === "string") return traducirEquipo(equipo);
+
+      return traducirEquipo(
+        equipo.name ||
+        equipo.title ||
+        equipo.team ||
+        equipo.country ||
+        equipo.code ||
+        "Por definir"
+      );
+    }
+
+    function obtenerNumero(match, index) {
+      return match.num || match.number || match.matchday || match.id || index + 1;
+    }
+
+    function obtenerGrupo(match, grupoPadre) {
+      const texto = match.group || match.group_name || match.stage || match.round || grupoPadre || "-";
+
+      return String(texto)
+        .replace("Group ", "")
+        .replace("Grupo ", "");
+    }
+
+    function obtenerFecha(match) {
+      const valor = match.date || match.datetime || match.time || match.utcDate || "";
+
+      if (!valor) return "-";
+
+      const fecha = new Date(valor);
+
+      if (isNaN(fecha.getTime())) {
+        return String(valor).split(" ")[0];
+      }
+
+      return fecha.toLocaleDateString("es-CL", {
+        day: "2-digit",
+        month: "short"
+      });
+    }
+
+    function obtenerHora(match) {
+      const valor = match.time || match.datetime || match.utcDate || "";
+
+      if (!valor) return "-";
+
+      if (/^\d{1,2}:\d{2}/.test(valor)) return valor;
+
+      const fecha = new Date(valor);
+
+      if (isNaN(fecha.getTime())) return "-";
+
+      return fecha.toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function obtenerScore(match) {
+      let gl = null;
+      let gv = null;
+
+      if (match.score1 !== undefined || match.score2 !== undefined) {
+        gl = match.score1;
+        gv = match.score2;
+      }
+
+      if (match.goals1 !== undefined || match.goals2 !== undefined) {
+        gl = match.goals1;
+        gv = match.goals2;
+      }
+
+      if (match.home_score !== undefined || match.away_score !== undefined) {
+        gl = match.home_score;
+        gv = match.away_score;
+      }
+
+      if (match.score && typeof match.score === "object") {
+        if (Array.isArray(match.score.ft)) {
+          gl = match.score.ft[0];
+          gv = match.score.ft[1];
+        }
+
+        if (match.score.fullTime) {
+          gl = match.score.fullTime.home ?? gl;
+          gv = match.score.fullTime.away ?? gv;
+        }
+      }
+
+      gl = gl === undefined ? null : gl;
+      gv = gv === undefined ? null : gv;
+
+      return { gl, gv };
+    }
+
+    function esObjetoMatch(obj) {
+      if (!obj || typeof obj !== "object") return false;
+
+      const tieneTeam1Team2 = obj.team1 && obj.team2;
+      const tieneHomeAway = (obj.home || obj.home_team || obj.homeTeam) && (obj.away || obj.away_team || obj.awayTeam);
+
+      return tieneTeam1Team2 || tieneHomeAway;
+    }
+
+    function normalizarMatch(match, index, grupoPadre) {
+      const localRaw = match.team1 || match.home || match.home_team || match.homeTeam;
+      const visitaRaw = match.team2 || match.away || match.away_team || match.awayTeam;
+      const score = obtenerScore(match);
+
+      return {
+        n: obtenerNumero(match, index),
+        grupo: obtenerGrupo(match, grupoPadre),
+        fecha: obtenerFecha(match),
+        hora: obtenerHora(match),
+        local: obtenerNombreEquipo(localRaw),
+        visita: obtenerNombreEquipo(visitaRaw),
+        gl: score.gl,
+        gv: score.gv
+      };
+    }
+
+    function buscarMatches(data, grupoPadre = null, encontrados = []) {
+      if (Array.isArray(data)) {
+        data.forEach(item => buscarMatches(item, grupoPadre, encontrados));
+        return encontrados;
+      }
+
+      if (!data || typeof data !== "object") return encontrados;
+
+      const grupoActual =
+        data.name ||
+        data.group ||
+        data.group_name ||
+        grupoPadre;
+
+      if (esObjetoMatch(data)) {
+        encontrados.push({ match: data, grupoPadre });
+        return encontrados;
+      }
+
+      Object.keys(data).forEach(key => {
+        buscarMatches(data[key], grupoActual, encontrados);
+      });
+
+      return encontrados;
+    }
+
     function estaJugado(partido) {
-      return partido.gl !== null && partido.gv !== null;
+      return partido.gl !== null && partido.gv !== null && partido.gl !== "" && partido.gv !== "";
     }
 
     function render() {
@@ -286,6 +452,10 @@
         if (filtroActual === "pendientes") return !estaJugado(p);
         return true;
       });
+
+      if (partidosFiltrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8">No hay partidos para mostrar.</td></tr>`;
+      }
 
       partidosFiltrados.forEach(p => {
         const jugado = estaJugado(p);
@@ -308,6 +478,7 @@
       });
 
       const jugados = partidos.filter(estaJugado).length;
+
       document.getElementById("totalPartidos").textContent = partidos.length;
       document.getElementById("partidosJugados").textContent = jugados;
       document.getElementById("partidosPendientes").textContent = partidos.length - jugados;
@@ -322,7 +493,45 @@
       render();
     }
 
-    render();
+    async function cargarResultados() {
+      try {
+        const response = await fetch(FUENTE, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("No se pudo leer la fuente online.");
+        }
+
+        const data = await response.json();
+
+        const encontrados = buscarMatches(data);
+
+        partidos = encontrados.map((item, index) => {
+          return normalizarMatch(item.match, index, item.grupoPadre);
+        });
+
+        partidos.sort((a, b) => Number(a.n) - Number(b.n));
+
+        document.getElementById("ultimaLectura").textContent =
+          new Date().toLocaleTimeString("es-CL", {
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+        render();
+
+      } catch (error) {
+        console.error(error);
+
+        const errorBox = document.getElementById("errorBox");
+        errorBox.style.display = "block";
+        errorBox.textContent = "No se pudo cargar la información online desde OpenFootball. Puede ser por estructura distinta del JSON, bloqueo temporal o fuente sin datos.";
+
+        document.getElementById("tablaResultados").innerHTML =
+          `<tr><td colspan="8">Error cargando datos online.</td></tr>`;
+      }
+    }
+
+    cargarResultados();
   </script>
 </body>
 </html>
