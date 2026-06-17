@@ -185,7 +185,7 @@
       </div>
 
       <div class="card">
-        <span>Última lectura</span>
+        <span>Última actualización</span>
         <strong id="ultimaLectura">-</strong>
       </div>
     </section>
@@ -512,7 +512,10 @@
         partidos.sort((a, b) => Number(a.n) - Number(b.n));
 
         document.getElementById("ultimaLectura").textContent =
-          new Date().toLocaleTimeString("es-CL", {
+          new Date().toLocaleString("es-CL", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
             hour: "2-digit",
             minute: "2-digit"
           });
