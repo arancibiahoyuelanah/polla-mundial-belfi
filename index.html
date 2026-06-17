@@ -511,13 +511,19 @@
 
         partidos.sort((a, b) => Number(a.n) - Number(b.n));
 
+        const ahora = new Date();
+
         document.getElementById("ultimaLectura").textContent =
-          new Date().toLocaleString("es-CL", {
+          ahora.toLocaleDateString("es-CL", {
             day: "2-digit",
             month: "2-digit",
-            year: "numeric",
+            year: "numeric"
+          }) +
+          " " +
+          ahora.toLocaleTimeString("es-CL", {
             hour: "2-digit",
-            minute: "2-digit"
+            minute: "2-digit",
+            hour12: false
           });
 
         render();
