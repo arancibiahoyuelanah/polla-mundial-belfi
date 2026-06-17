@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultados Oficiales - Polla Mundial Belfi</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 32px 16px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: #d1d5db;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+
+    .card span {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 28px;
+    }
+
+    .filters {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      background: #e5e7eb;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button.active {
+      background: #111827;
+      color: white;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th, td {
+      padding: 13px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    th {
+      background: #1f2937;
+      color: white;
+      font-size: 14px;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .score {
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .jugado {
+      color: #047857;
+      font-weight: bold;
+    }
+
+    .pendiente {
+      color: #b45309;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Resultados Oficiales</h1>
+    <p>Polla Mundial Belfi · Primera fase</p>
+  </header>
+
+  <main>
+    <section class="cards">
+      <div class="card">
+        <span>Total partidos</span>
+        <strong id="totalPartidos">0</strong>
+      </div>
+
+      <div class="card">
+        <span>Partidos jugados</span>
+        <strong id="partidosJugados">0</strong>
+      </div>
+
+      <div class="card">
+        <span>Partidos pendientes</span>
+        <strong id="partidosPendientes">0</strong>
+      </div>
+
+      <div class="card">
+        <span>Última actualización</span>
+        <strong>17/06/2026</strong>
+      </div>
+    </section>
+
+    <div class="filters">
+      <button class="active" onclick="filtrar('todos', this)">Todos</button>
+      <button onclick="filtrar('jugados', this)">Jugados</button>
+      <button onclick="filtrar('pendientes', this)">Pendientes</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Grupo</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Local</th>
+            <th>Resultado</th>
+            <th>Visita</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tablaResultados"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    Fuente: Resultados Oficiales Polla Mundial 2026 · Página simple inicial
+  </footer>
+
+  <script>
+    const partidos = [
+      { n: 1, grupo: "A", fecha: "11-jun", hora: "15:00", local: "México", gl: 2, gv: 0, visita: "Sudáfrica" },
+      { n: 2, grupo: "A", fecha: "11-jun", hora: "22:00", local: "Corea del Sur", gl: 2, gv: 1, visita: "Repúb. Checa" },
+      { n: 3, grupo: "B", fecha: "12-jun", hora: "15:00", local: "Canadá", gl: 1, gv: 1, visita: "Bosnia y Herzeg." },
+      { n: 4, grupo: "D", fecha: "12-jun", hora: "21:00", local: "EE. UU.", gl: 4, gv: 1, visita: "Paraguay" },
+      { n: 5, grupo: "B", fecha: "13-jun", hora: "15:00", local: "Qatar", gl: 1, gv: 1, visita: "Suiza" },
+      { n: 6, grupo: "C", fecha: "13-jun", hora: "18:00", local: "Brasil", gl: 1, gv: 1, visita: "Marruecos" },
+      { n: 7, grupo: "C", fecha: "13-jun", hora: "21:00", local: "Haití", gl: 0, gv: 1, visita: "Escocia" },
+      { n: 8, grupo: "D", fecha: "14-jun", hora: "0:00", local: "Australia", gl: 2, gv: 0, visita: "Turquía" },
+      { n: 9, grupo: "E", fecha: "14-jun", hora: "13:00", local: "Alemania", gl: 7, gv: 1, visita: "Curazao" },
+      { n: 10, grupo: "E", fecha: "14-jun", hora: "19:00", local: "Costa de Marfil", gl: 1, gv: 0, visita: "Ecuador" },
+      { n: 11, grupo: "F", fecha: "14-jun", hora: "16:00", local: "Países Bajos", gl: 2, gv: 2, visita: "Japón" },
+      { n: 12, grupo: "F", fecha: "14-jun", hora: "22:00", local: "Suecia", gl: 5, gv: 1, visita: "Túnez" },
+      { n: 13, grupo: "G", fecha: "15-jun", hora: "15:00", local: "Bélgica", gl: 1, gv: 1, visita: "Egipto" },
+      { n: 14, grupo: "G", fecha: "15-jun", hora: "21:00", local: "Irán", gl: 2, gv: 2, visita: "Nueva Zelanda" },
+      { n: 15, grupo: "H", fecha: "15-jun", hora: "12:00", local: "España", gl: 0, gv: 0, visita: "Cabo Verde" },
+      { n: 16, grupo: "H", fecha: "15-jun", hora: "18:00", local: "Arabia Saudita", gl: 1, gv: 1, visita: "Uruguay" },
+      { n: 17, grupo: "I", fecha: "16-jun", hora: "15:00", local: "Francia", gl: 3, gv: 1, visita: "Senegal" },
+      { n: 18, grupo: "I", fecha: "16-jun", hora: "18:00", local: "Irak", gl: 1, gv: 4, visita: "Noruega" },
+      { n: 19, grupo: "J", fecha: "16-jun", hora: "21:00", local: "Argentina", gl: 3, gv: 0, visita: "Argelia" },
+      { n: 20, grupo: "J", fecha: "17-jun", hora: "0:00", local: "Austria", gl: 3, gv: 1, visita: "Jordania" },
+
+      { n: 21, grupo: "K", fecha: "17-jun", hora: "13:00", local: "Portugal", gl: null, gv: null, visita: "R. D. del Congo" },
+      { n: 22, grupo: "K", fecha: "17-jun", hora: "22:00", local: "Uzbekistán", gl: null, gv: null, visita: "Colombia" },
+      { n: 23, grupo: "L", fecha: "17-jun", hora: "16:00", local: "Inglaterra", gl: null, gv: null, visita: "Croacia" },
+      { n: 24, grupo: "L", fecha: "17-jun", hora: "19:00", local: "Ghana", gl: null, gv: null, visita: "Panamá" },
+      { n: 25, grupo: "A", fecha: "18-jun", hora: "12:00", local: "Repúb. Checa", gl: null, gv: null, visita: "Sudáfrica" },
+      { n: 26, grupo: "A", fecha: "18-jun", hora: "21:00", local: "México", gl: null, gv: null, visita: "Corea del Sur" },
+      { n: 27, grupo: "B", fecha: "18-jun", hora: "15:00", local: "Suiza", gl: null, gv: null, visita: "Bosnia y Herzeg." },
+      { n: 28, grupo: "B", fecha: "18-jun", hora: "18:00", local: "Canadá", gl: null, gv: null, visita: "Qatar" },
+      { n: 29, grupo: "C", fecha: "19-jun", hora: "18:00", local: "Escocia", gl: null, gv: null, visita: "Marruecos" },
+      { n: 30, grupo: "C", fecha: "19-jun", hora: "20:30", local: "Brasil", gl: null, gv: null, visita: "Haití" },
+      { n: 31, grupo: "D", fecha: "19-jun", hora: "23:00", local: "Turquía", gl: null, gv: null, visita: "Paraguay" },
+      { n: 32, grupo: "D", fecha: "19-jun", hora: "15:00", local: "EE. UU.", gl: null, gv: null, visita: "Australia" },
+      { n: 33, grupo: "E", fecha: "20-jun", hora: "16:00", local: "Alemania", gl: null, gv: null, visita: "Costa de Marfil" },
+      { n: 34, grupo: "E", fecha: "20-jun", hora: "20:00", local: "Ecuador", gl: null, gv: null, visita: "Curazao" },
+      { n: 35, grupo: "F", fecha: "20-jun", hora: "13:00", local: "Países Bajos", gl: null, gv: null, visita: "Suecia" },
+      { n: 36, grupo: "F", fecha: "21-jun", hora: "0:00", local: "Túnez", gl: null, gv: null, visita: "Japón" },
+      { n: 37, grupo: "G", fecha: "21-jun", hora: "15:00", local: "Bélgica", gl: null, gv: null, visita: "Irán" },
+      { n: 38, grupo: "G", fecha: "21-jun", hora: "21:00", local: "Nueva Zelanda", gl: null, gv: null, visita: "Egipto" },
+      { n: 39, grupo: "H", fecha: "21-jun", hora: "12:00", local: "España", gl: null, gv: null, visita: "Arabia Saudita" },
+      { n: 40, grupo: "H", fecha: "21-jun", hora: "18:00", local: "Uruguay", gl: null, gv: null, visita: "Cabo Verde" },
+      { n: 41, grupo: "I", fecha: "22-jun", hora: "17:00", local: "Francia", gl: null, gv: null, visita: "Irak" },
+      { n: 42, grupo: "I", fecha: "22-jun", hora: "20:00", local: "Noruega", gl: null, gv: null, visita: "Senegal" },
+      { n: 43, grupo: "J", fecha: "22-jun", hora: "13:00", local: "Argentina", gl: null, gv: null, visita: "Austria" },
+      { n: 44, grupo: "J", fecha: "22-jun", hora: "23:00", local: "Jordania", gl: null, gv: null, visita: "Argelia" },
+      { n: 45, grupo: "K", fecha: "23-jun", hora: "13:00", local: "Portugal", gl: null, gv: null, visita: "Uzbekistán" },
+      { n: 46, grupo: "K", fecha: "23-jun", hora: "22:00", local: "Colombia", gl: null, gv: null, visita: "R. D. del Congo" },
+      { n: 47, grupo: "L", fecha: "23-jun", hora: "16:00", local: "Inglaterra", gl: null, gv: null, visita: "Ghana" },
+      { n: 48, grupo: "L", fecha: "23-jun", hora: "19:00", local: "Panamá", gl: null, gv: null, visita: "Croacia" },
+      { n: 49, grupo: "A", fecha: "24-jun", hora: "21:00", local: "Repúb. Checa", gl: null, gv: null, visita: "México" },
+      { n: 50, grupo: "A", fecha: "24-jun", hora: "21:00", local: "Sudáfrica", gl: null, gv: null, visita: "Corea del Sur" },
+      { n: 51, grupo: "B", fecha: "24-jun", hora: "15:00", local: "Suiza", gl: null, gv: null, visita: "Canadá" },
+      { n: 52, grupo: "B", fecha: "24-jun", hora: "15:00", local: "Bosnia y Herzeg.", gl: null, gv: null, visita: "Qatar" },
+      { n: 53, grupo: "C", fecha: "24-jun", hora: "18:00", local: "Escocia", gl: null, gv: null, visita: "Brasil" },
+      { n: 54, grupo: "C", fecha: "24-jun", hora: "18:00", local: "Marruecos", gl: null, gv: null, visita: "Haití" },
+      { n: 55, grupo: "D", fecha: "25-jun", hora: "22:00", local: "Turquía", gl: null, gv: null, visita: "EE. UU." },
+      { n: 56, grupo: "D", fecha: "25-jun", hora: "22:00", local: "Paraguay", gl: null, gv: null, visita: "Australia" },
+      { n: 57, grupo: "E", fecha: "25-jun", hora: "16:00", local: "Ecuador", gl: null, gv: null, visita: "Alemania" },
+      { n: 58, grupo: "E", fecha: "25-jun", hora: "16:00", local: "Curazao", gl: null, gv: null, visita: "Costa de Marfil" },
+      { n: 59, grupo: "F", fecha: "25-jun", hora: "19:00", local: "Japón", gl: null, gv: null, visita: "Suecia" },
+      { n: 60, grupo: "F", fecha: "25-jun", hora: "19:00", local: "Túnez", gl: null, gv: null, visita: "Países Bajos" },
+      { n: 61, grupo: "G", fecha: "26-jun", hora: "23:00", local: "Egipto", gl: null, gv: null, visita: "Irán" },
+      { n: 62, grupo: "G", fecha: "26-jun", hora: "23:00", local: "Nueva Zelanda", gl: null, gv: null, visita: "Bélgica" },
+      { n: 63, grupo: "H", fecha: "26-jun", hora: "20:00", local: "Uruguay", gl: null, gv: null, visita: "España" },
+      { n: 64, grupo: "H", fecha: "26-jun", hora: "20:00", local: "Cabo Verde", gl: null, gv: null, visita: "Arabia Saudita" },
+      { n: 65, grupo: "I", fecha: "26-jun", hora: "15:00", local: "Noruega", gl: null, gv: null, visita: "Francia" },
+      { n: 66, grupo: "I", fecha: "26-jun", hora: "15:00", local: "Senegal", gl: null, gv: null, visita: "Irak" },
+      { n: 67, grupo: "J", fecha: "27-jun", hora: "22:00", local: "Jordania", gl: null, gv: null, visita: "Argentina" },
+      { n: 68, grupo: "J", fecha: "27-jun", hora: "22:00", local: "Argelia", gl: null, gv: null, visita: "Austria" },
+      { n: 69, grupo: "K", fecha: "27-jun", hora: "19:30", local: "Colombia", gl: null, gv: null, visita: "Portugal" },
+      { n: 70, grupo: "K", fecha: "27-jun", hora: "19:30", local: "R. D. del Congo", gl: null, gv: null, visita: "Uzbekistán" },
+      { n: 71, grupo: "L", fecha: "27-jun", hora: "17:00", local: "Panamá", gl: null, gv: null, visita: "Inglaterra" },
+      { n: 72, grupo: "L", fecha: "27-jun", hora: "17:00", local: "Croacia", gl: null, gv: null, visita: "Ghana" }
+    ];
+
+    let filtroActual = "todos";
+
+    function estaJugado(partido) {
+      return partido.gl !== null && partido.gv !== null;
+    }
+
+    function render() {
+      const tbody = document.getElementById("tablaResultados");
+      tbody.innerHTML = "";
+
+      const partidosFiltrados = partidos.filter(p => {
+        if (filtroActual === "jugados") return estaJugado(p);
+        if (filtroActual === "pendientes") return !estaJugado(p);
+        return true;
+      });
+
+      partidosFiltrados.forEach(p => {
+        const jugado = estaJugado(p);
+        const resultado = jugado ? `${p.gl} - ${p.gv}` : "-";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.n}</td>
+          <td>${p.grupo}</td>
+          <td>${p.fecha}</td>
+          <td>${p.hora}</td>
+          <td>${p.local}</td>
+          <td class="score">${resultado}</td>
+          <td>${p.visita}</td>
+          <td class="${jugado ? "jugado" : "pendiente"}">
+            ${jugado ? "Jugado" : "Pendiente"}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const jugados = partidos.filter(estaJugado).length;
+      document.getElementById("totalPartidos").textContent = partidos.length;
+      document.getElementById("partidosJugados").textContent = jugados;
+      document.getElementById("partidosPendientes").textContent = partidos.length - jugados;
+    }
+
+    function filtrar(tipo, boton) {
+      filtroActual = tipo;
+
+      document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      boton.classList.add("active");
+
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
