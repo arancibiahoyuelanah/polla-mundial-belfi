@@ -17,7 +17,7 @@
     header {
       background: #111827;
       color: white;
-      padding: 32px 16px;
+      padding: 28px 16px;
       text-align: center;
     }
 
@@ -37,12 +37,6 @@
       padding: 0 16px;
     }
 
-    h2 {
-      margin-top: 32px;
-      margin-bottom: 14px;
-      font-size: 22px;
-    }
-
     .notice {
       background: #fff7ed;
       border: 1px solid #fed7aa;
@@ -53,14 +47,44 @@
       font-size: 14px;
     }
 
-    .warning {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
+    .error {
+      background: #fee2e2;
       color: #991b1b;
       padding: 14px 16px;
       border-radius: 14px;
       margin-bottom: 16px;
-      font-size: 14px;
+      display: none;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tabs button,
+    .filters button {
+      border: none;
+      background: #e5e7eb;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tabs button.active,
+    .filters button.active {
+      background: #111827;
+      color: white;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
     }
 
     .cards {
@@ -88,25 +112,9 @@
       font-size: 26px;
     }
 
-    .filters {
-      margin-bottom: 16px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      border: none;
-      background: #e5e7eb;
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button.active {
-      background: #111827;
-      color: white;
+    h2 {
+      margin-top: 28px;
+      margin-bottom: 12px;
     }
 
     .table-wrap {
@@ -156,17 +164,29 @@
     }
 
     .top1 {
-      font-weight: bold;
       background: #fff7ed !important;
+      font-weight: bold;
     }
 
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-      padding: 16px;
-      border-radius: 14px;
+    .filters {
       margin-bottom: 16px;
-      display: none;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .criterio-box {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      line-height: 1.6;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 6px;
     }
 
     footer {
@@ -181,22 +201,26 @@
 <body>
   <header>
     <h1>Polla Mundial Belfi</h1>
-    <p>Ranking preliminar y resultados oficiales online</p>
+    <p>Ranking automático · Resultados · Criterios</p>
   </header>
 
   <main>
     <div class="notice">
-      Ranking calculado con los partidos oficiales disponibles hasta ahora. La fuente online de resultados se lee desde OpenFootball.
+      La página calcula el ranking cruzando los pronósticos de cada cartilla con los resultados reales cargados.
     </div>
-
-    <div class="warning" id="warningOCR" style="display:none;"></div>
 
     <div id="errorBox" class="error"></div>
 
+    <div class="tabs">
+      <button class="active" onclick="mostrarHoja('ranking', this)">Cómo va la polla</button>
+      <button onclick="mostrarHoja('partidos', this)">Cómo van los partidos</button>
+      <button onclick="mostrarHoja('criterios', this)">Instrucciones y criterios</button>
+    </div>
+
     <section class="cards">
       <div class="card">
-        <span>Total partidos</span>
-        <strong id="totalPartidos">0</strong>
+        <span>Cartillas cargadas</span>
+        <strong id="cartillasCargadas">0</strong>
       </div>
 
       <div class="card">
@@ -205,8 +229,8 @@
       </div>
 
       <div class="card">
-        <span>Partidos pendientes</span>
-        <strong id="partidosPendientes">0</strong>
+        <span>Líder actual</span>
+        <strong id="liderActual">-</strong>
       </div>
 
       <div class="card">
@@ -215,93 +239,140 @@
       </div>
     </section>
 
-    <section class="cards">
-      <div class="card">
-        <span>Cartillas computadas</span>
-        <strong id="cartillasComputadas">0</strong>
-      </div>
+    <section id="ranking" class="section active">
+      <h2>Cómo va la polla</h2>
 
-      <div class="card">
-        <span>Líder actual</span>
-        <strong id="liderActual">-</strong>
-      </div>
-
-      <div class="card">
-        <span>Puntaje líder</span>
-        <strong id="puntajeLider">0</strong>
-      </div>
-
-      <div class="card">
-        <span>Cartillas pendientes OCR</span>
-        <strong id="pendientesOCR">0</strong>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pos.</th>
+              <th>Cartilla</th>
+              <th>Nombre</th>
+              <th>Puntos</th>
+              <th>Exactos</th>
+              <th>Aciertos ganador/empate</th>
+              <th>Partidos computados</th>
+            </tr>
+          </thead>
+          <tbody id="tablaRanking">
+            <tr>
+              <td colspan="7">Cargando ranking...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <h2>Ranking de la Polla</h2>
+    <section id="partidos" class="section">
+      <h2>Cómo van los partidos</h2>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Pos.</th>
-            <th>N° Cartilla</th>
-            <th>Nombre</th>
-            <th>Puntos</th>
-            <th>Exactos</th>
-            <th>Aciertos ganador/empate</th>
-            <th>Partidos computados</th>
-          </tr>
-        </thead>
-        <tbody id="tablaRanking">
-          <tr>
-            <td colspan="7">Cargando ranking...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="filters">
+        <button class="active" onclick="filtrarPartidos('todos', this)">Todos</button>
+        <button onclick="filtrarPartidos('jugados', this)">Jugados</button>
+        <button onclick="filtrarPartidos('pendientes', this)">Pendientes</button>
+      </div>
 
-    <h2>Resultados Oficiales</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Grupo</th>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Local</th>
+              <th>Resultado</th>
+              <th>Visita</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tablaPartidos">
+            <tr>
+              <td colspan="8">Cargando partidos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-    <div class="filters">
-      <button class="active" onclick="filtrar('todos', this)">Todos</button>
-      <button onclick="filtrar('jugados', this)">Jugados</button>
-      <button onclick="filtrar('pendientes', this)">Pendientes</button>
-    </div>
+    <section id="criterios" class="section">
+      <h2>Instrucciones y criterios</h2>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>N°</th>
-            <th>Grupo</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Local</th>
-            <th>Resultado</th>
-            <th>Visita</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="tablaResultados">
-          <tr>
-            <td colspan="8">Cargando resultados online...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="criterio-box">
+        <p><strong>Regla de puntaje:</strong></p>
+
+        <p>
+          Si la persona acierta el ganador o el empate, obtiene <strong>1 punto</strong>,
+          independiente del marcador.
+        </p>
+
+        <p>
+          Si además acierta el marcador exacto, obtiene <strong>2 puntos adicionales</strong>.
+          Por lo tanto, un marcador exacto entrega <strong>3 puntos en total</strong>.
+        </p>
+
+        <p><strong>Ejemplo:</strong></p>
+
+        <p>
+          Resultado real: <code>2 - 1</code>
+        </p>
+
+        <p>
+          Pronóstico <code>1 - 0</code>: obtiene <strong>1 punto</strong>, porque acertó ganador.
+        </p>
+
+        <p>
+          Pronóstico <code>2 - 1</code>: obtiene <strong>3 puntos</strong>, porque acertó ganador y marcador exacto.
+        </p>
+
+        <p>
+          Cualquier otro resultado que no acierte ganador/empate entrega <strong>0 puntos</strong>.
+        </p>
+
+        <p>
+          La tabla se recalcula automáticamente usando los partidos que ya tienen marcador real.
+        </p>
+      </div>
+    </section>
   </main>
 
   <footer>
-    Polla Mundial Belfi · Resultados referenciales sujetos a actualización
+    Polla Mundial Belfi · Ranking calculado automáticamente
   </footer>
 
-  <script src="ranking_polla.js"></script>
+  <script src="cartillas_polla.js"></script>
 
   <script>
-    const FUENTE = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+    const FUENTE_OPENFOOTBALL =
+      "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
 
     let partidos = [];
-    let filtroActual = "todos";
+    let ranking = [];
+    let filtroPartidos = "todos";
+
+    const resultadosFallback = [
+      { n: 1, grupo: "A", fecha: "11-jun", hora: "15:00", local: "México", gl: 2, gv: 0, visita: "Sudáfrica" },
+      { n: 2, grupo: "A", fecha: "11-jun", hora: "22:00", local: "Corea del Sur", gl: 2, gv: 1, visita: "Repúb. Checa" },
+      { n: 3, grupo: "B", fecha: "12-jun", hora: "15:00", local: "Canadá", gl: 1, gv: 1, visita: "Bosnia y Herzeg." },
+      { n: 4, grupo: "D", fecha: "12-jun", hora: "21:00", local: "EE. UU.", gl: 4, gv: 1, visita: "Paraguay" },
+      { n: 5, grupo: "B", fecha: "13-jun", hora: "15:00", local: "Qatar", gl: 1, gv: 1, visita: "Suiza" },
+      { n: 6, grupo: "C", fecha: "13-jun", hora: "18:00", local: "Brasil", gl: 1, gv: 1, visita: "Marruecos" },
+      { n: 7, grupo: "C", fecha: "13-jun", hora: "21:00", local: "Haití", gl: 0, gv: 1, visita: "Escocia" },
+      { n: 8, grupo: "D", fecha: "14-jun", hora: "00:00", local: "Australia", gl: 2, gv: 0, visita: "Turquía" },
+      { n: 9, grupo: "E", fecha: "14-jun", hora: "13:00", local: "Alemania", gl: 7, gv: 1, visita: "Curazao" },
+      { n: 10, grupo: "E", fecha: "14-jun", hora: "19:00", local: "Costa de Marfil", gl: 1, gv: 0, visita: "Ecuador" },
+      { n: 11, grupo: "F", fecha: "14-jun", hora: "16:00", local: "Países Bajos", gl: 2, gv: 2, visita: "Japón" },
+      { n: 12, grupo: "F", fecha: "14-jun", hora: "22:00", local: "Suecia", gl: 5, gv: 1, visita: "Túnez" },
+      { n: 13, grupo: "G", fecha: "15-jun", hora: "15:00", local: "Bélgica", gl: 1, gv: 1, visita: "Egipto" },
+      { n: 14, grupo: "G", fecha: "15-jun", hora: "21:00", local: "Irán", gl: 2, gv: 2, visita: "Nueva Zelanda" },
+      { n: 15, grupo: "H", fecha: "15-jun", hora: "12:00", local: "España", gl: 0, gv: 0, visita: "Cabo Verde" },
+      { n: 16, grupo: "H", fecha: "15-jun", hora: "18:00", local: "Arabia Saudita", gl: 1, gv: 1, visita: "Uruguay" },
+      { n: 17, grupo: "I", fecha: "16-jun", hora: "15:00", local: "Francia", gl: 3, gv: 1, visita: "Senegal" },
+      { n: 18, grupo: "I", fecha: "16-jun", hora: "18:00", local: "Irak", gl: 1, gv: 4, visita: "Noruega" },
+      { n: 19, grupo: "J", fecha: "16-jun", hora: "21:00", local: "Argentina", gl: 3, gv: 0, visita: "Argelia" },
+      { n: 20, grupo: "J", fecha: "17-jun", hora: "00:00", local: "Austria", gl: 3, gv: 1, visita: "Jordania" }
+    ];
 
     const traducciones = {
       "Mexico": "México",
@@ -312,7 +383,6 @@
       "Bosnia and Herzegovina": "Bosnia y Herzeg.",
       "United States": "EE. UU.",
       "USA": "EE. UU.",
-      "Paraguay": "Paraguay",
       "Qatar": "Qatar",
       "Switzerland": "Suiza",
       "Brazil": "Brasil",
@@ -323,11 +393,10 @@
       "Turkey": "Turquía",
       "Türkiye": "Turquía",
       "Germany": "Alemania",
-      "Curaçao": "Curazao",
       "Curacao": "Curazao",
-      "Côte d'Ivoire": "Costa de Marfil",
+      "Curaçao": "Curazao",
       "Ivory Coast": "Costa de Marfil",
-      "Ecuador": "Ecuador",
+      "Côte d'Ivoire": "Costa de Marfil",
       "Netherlands": "Países Bajos",
       "Japan": "Japón",
       "Sweden": "Suecia",
@@ -339,39 +408,38 @@
       "Spain": "España",
       "Cape Verde": "Cabo Verde",
       "Saudi Arabia": "Arabia Saudita",
-      "Uruguay": "Uruguay",
       "France": "Francia",
       "Senegal": "Senegal",
       "Iraq": "Irak",
       "Norway": "Noruega",
-      "Argentina": "Argentina",
       "Algeria": "Argelia",
-      "Austria": "Austria",
       "Jordan": "Jordania",
-      "Portugal": "Portugal",
       "DR Congo": "R. D. del Congo",
       "Congo DR": "R. D. del Congo",
       "Uzbekistan": "Uzbekistán",
-      "Colombia": "Colombia",
       "England": "Inglaterra",
       "Croatia": "Croacia",
-      "Ghana": "Ghana",
       "Panama": "Panamá"
     };
 
-    function traducirEquipo(nombre) {
+    function mostrarHoja(id, boton) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+
+      document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+      boton.classList.add("active");
+    }
+
+    function traducir(nombre) {
       if (!nombre) return "Por definir";
       return traducciones[nombre] || nombre;
     }
 
     function obtenerNombreEquipo(equipo) {
       if (!equipo) return "Por definir";
+      if (typeof equipo === "string") return traducir(equipo);
 
-      if (typeof equipo === "string") {
-        return traducirEquipo(equipo);
-      }
-
-      return traducirEquipo(
+      return traducir(
         equipo.name ||
         equipo.title ||
         equipo.team ||
@@ -379,55 +447,6 @@
         equipo.code ||
         "Por definir"
       );
-    }
-
-    function obtenerNumero(match, index) {
-      return match.num || match.number || match.matchday || match.id || index + 1;
-    }
-
-    function obtenerGrupo(match, grupoPadre) {
-      const texto = match.group || match.group_name || match.stage || match.round || grupoPadre || "-";
-
-      return String(texto)
-        .replace("Group ", "")
-        .replace("Grupo ", "");
-    }
-
-    function obtenerFecha(match) {
-      const valor = match.date || match.datetime || match.utcDate || "";
-
-      if (!valor) return "-";
-
-      const fecha = new Date(valor);
-
-      if (isNaN(fecha.getTime())) {
-        return String(valor).split(" ")[0];
-      }
-
-      return fecha.toLocaleDateString("es-CL", {
-        day: "2-digit",
-        month: "short"
-      });
-    }
-
-    function obtenerHora(match) {
-      const valor = match.time || match.datetime || match.utcDate || "";
-
-      if (!valor) return "-";
-
-      if (/^\d{1,2}:\d{2}/.test(valor)) {
-        return valor;
-      }
-
-      const fecha = new Date(valor);
-
-      if (isNaN(fecha.getTime())) return "-";
-
-      return fecha.toLocaleTimeString("es-CL", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      });
     }
 
     function obtenerScore(match) {
@@ -461,38 +480,20 @@
         }
       }
 
-      gl = gl === undefined ? null : gl;
-      gv = gv === undefined ? null : gv;
-
-      return { gl, gv };
+      return {
+        gl: gl === undefined ? null : gl,
+        gv: gv === undefined ? null : gv
+      };
     }
 
     function esObjetoMatch(obj) {
       if (!obj || typeof obj !== "object") return false;
 
-      const tieneTeam1Team2 = obj.team1 && obj.team2;
-      const tieneHomeAway =
-        (obj.home || obj.home_team || obj.homeTeam) &&
-        (obj.away || obj.away_team || obj.awayTeam);
-
-      return tieneTeam1Team2 || tieneHomeAway;
-    }
-
-    function normalizarMatch(match, index, grupoPadre) {
-      const localRaw = match.team1 || match.home || match.home_team || match.homeTeam;
-      const visitaRaw = match.team2 || match.away || match.away_team || match.awayTeam;
-      const score = obtenerScore(match);
-
-      return {
-        n: obtenerNumero(match, index),
-        grupo: obtenerGrupo(match, grupoPadre),
-        fecha: obtenerFecha(match),
-        hora: obtenerHora(match),
-        local: obtenerNombreEquipo(localRaw),
-        visita: obtenerNombreEquipo(visitaRaw),
-        gl: score.gl,
-        gv: score.gv
-      };
+      return Boolean(
+        (obj.team1 && obj.team2) ||
+        ((obj.home || obj.home_team || obj.homeTeam) &&
+         (obj.away || obj.away_team || obj.awayTeam))
+      );
     }
 
     function buscarMatches(data, grupoPadre = null, encontrados = []) {
@@ -503,22 +504,38 @@
 
       if (!data || typeof data !== "object") return encontrados;
 
-      const grupoActual =
-        data.name ||
-        data.group ||
-        data.group_name ||
-        grupoPadre;
+      const grupoActual = data.name || data.group || data.group_name || grupoPadre;
 
       if (esObjetoMatch(data)) {
         encontrados.push({ match: data, grupoPadre });
         return encontrados;
       }
 
-      Object.keys(data).forEach(key => {
-        buscarMatches(data[key], grupoActual, encontrados);
-      });
+      Object.keys(data).forEach(key => buscarMatches(data[key], grupoActual, encontrados));
 
       return encontrados;
+    }
+
+    function normalizarMatch(match, index, grupoPadre) {
+      const score = obtenerScore(match);
+
+      const rawDate = match.date || match.datetime || match.utcDate || "";
+      const fecha = rawDate ? new Date(rawDate) : null;
+
+      return {
+        n: Number(match.num || match.number || match.matchday || match.id || index + 1),
+        grupo: String(match.group || match.group_name || grupoPadre || "-").replace("Group ", ""),
+        fecha: fecha && !isNaN(fecha.getTime())
+          ? fecha.toLocaleDateString("es-CL", { day: "2-digit", month: "short" })
+          : "-",
+        hora: fecha && !isNaN(fecha.getTime())
+          ? fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", hour12: false })
+          : (match.time || "-"),
+        local: obtenerNombreEquipo(match.team1 || match.home || match.home_team || match.homeTeam),
+        visita: obtenerNombreEquipo(match.team2 || match.away || match.away_team || match.awayTeam),
+        gl: score.gl,
+        gv: score.gv
+      };
     }
 
     function estaJugado(partido) {
@@ -526,6 +543,27 @@
              partido.gv !== null &&
              partido.gl !== "" &&
              partido.gv !== "";
+    }
+
+    function signo(gl, gv) {
+      if (gl > gv) return "L";
+      if (gl < gv) return "V";
+      return "E";
+    }
+
+    function calcularPuntos(real, pronostico) {
+      if (!real || !pronostico) return { puntos: 0, exacto: false, acierto: false };
+
+      const [realLocal, realVisita] = real;
+      const [predLocal, predVisita] = pronostico;
+
+      const exacto = realLocal === predLocal && realVisita === predVisita;
+      const acierto = signo(realLocal, realVisita) === signo(predLocal, predVisita);
+
+      if (exacto) return { puntos: 3, exacto: true, acierto: true };
+      if (acierto) return { puntos: 1, exacto: false, acierto: true };
+
+      return { puntos: 0, exacto: false, acierto: false };
     }
 
     function actualizarFechaHora() {
@@ -546,79 +584,102 @@
       document.getElementById("ultimaLectura").textContent = fecha + " " + hora;
     }
 
-    function renderRanking() {
-      const tbody = document.getElementById("tablaRanking");
+    function calcularRanking() {
+      const jugados = partidos.filter(estaJugado);
+      const reales = {};
 
-      if (!tbody) return;
+      jugados.forEach(p => {
+        reales[p.n] = [Number(p.gl), Number(p.gv)];
+      });
 
-      if (typeof rankingPolla === "undefined") {
-        tbody.innerHTML = `<tr><td colspan="7">No se encontró ranking_polla.js</td></tr>`;
+      if (typeof cartillasPolla === "undefined") {
+        mostrarError("No se encontró el archivo cartillas_polla.js. Primero hay que cargar los pronósticos.");
+        ranking = [];
+        renderRanking();
         return;
       }
 
-      tbody.innerHTML = "";
+      ranking = cartillasPolla.map(c => {
+        let puntos = 0;
+        let exactos = 0;
+        let aciertos = 0;
+        let computados = 0;
 
-      const rankingOrdenado = [...rankingPolla].sort((a, b) =>
+        Object.keys(reales).forEach(n => {
+          const pronostico = c.pronosticos?.[n];
+
+          if (!pronostico) return;
+
+          const r = calcularPuntos(reales[n], pronostico);
+
+          puntos += r.puntos;
+          exactos += r.exacto ? 1 : 0;
+          aciertos += r.acierto ? 1 : 0;
+          computados += 1;
+        });
+
+        return {
+          cartilla: c.cartilla,
+          nombre: c.nombre,
+          puntos,
+          exactos,
+          aciertos,
+          computados
+        };
+      });
+
+      ranking.sort((a, b) =>
         b.puntos - a.puntos ||
         b.exactos - a.exactos ||
-        b.ganadorEmpate - a.ganadorEmpate ||
+        b.aciertos - a.aciertos ||
         a.cartilla - b.cartilla
       );
 
-      rankingOrdenado.forEach((p, index) => {
+      renderRanking();
+    }
+
+    function renderRanking() {
+      const tbody = document.getElementById("tablaRanking");
+      tbody.innerHTML = "";
+
+      if (!ranking.length) {
+        tbody.innerHTML = `<tr><td colspan="7">No hay ranking disponible.</td></tr>`;
+        return;
+      }
+
+      ranking.forEach((p, index) => {
         const tr = document.createElement("tr");
 
-        if (index === 0) {
-          tr.classList.add("top1");
-        }
+        if (index === 0) tr.classList.add("top1");
 
         tr.innerHTML = `
           <td>${index + 1}</td>
-          <td>${p.cartilla}</td>
+          <td>N°${String(p.cartilla).padStart(2, "0")}</td>
           <td>${p.nombre}</td>
           <td class="score">${p.puntos}</td>
           <td>${p.exactos}</td>
-          <td>${p.ganadorEmpate}</td>
-          <td>${p.partidosComputados}</td>
+          <td>${p.aciertos}</td>
+          <td>${p.computados}</td>
         `;
 
         tbody.appendChild(tr);
       });
 
-      const lider = rankingOrdenado[0];
-
-      document.getElementById("cartillasComputadas").textContent = rankingOrdenado.length;
-      document.getElementById("liderActual").textContent = lider ? lider.nombre : "-";
-      document.getElementById("puntajeLider").textContent = lider ? lider.puntos : "0";
-
-      if (typeof cartillasPendientesOCR !== "undefined") {
-        document.getElementById("pendientesOCR").textContent = cartillasPendientesOCR.length;
-
-        if (cartillasPendientesOCR.length > 0) {
-          const warning = document.getElementById("warningOCR");
-          warning.style.display = "block";
-          warning.textContent =
-            "Ranking preliminar: hay cartillas pendientes de lectura/OCR: " +
-            cartillasPendientesOCR.join(", ") + ".";
-        }
-      }
+      document.getElementById("cartillasCargadas").textContent = ranking.length;
+      document.getElementById("liderActual").textContent = ranking[0]?.nombre || "-";
     }
 
-    function renderResultados() {
-      const tbody = document.getElementById("tablaResultados");
+    function renderPartidos() {
+      const tbody = document.getElementById("tablaPartidos");
       tbody.innerHTML = "";
 
-      const partidosFiltrados = partidos.filter(p => {
-        if (filtroActual === "jugados") return estaJugado(p);
-        if (filtroActual === "pendientes") return !estaJugado(p);
+      const filtrados = partidos.filter(p => {
+        if (filtroPartidos === "jugados") return estaJugado(p);
+        if (filtroPartidos === "pendientes") return !estaJugado(p);
         return true;
       });
 
-      if (partidosFiltrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8">No hay partidos para mostrar.</td></tr>`;
-      }
-
-      partidosFiltrados.forEach(p => {
+      filtrados.forEach(p => {
         const jugado = estaJugado(p);
         const resultado = jugado ? `${p.gl} - ${p.gv}` : "-";
 
@@ -642,58 +703,56 @@
 
       const jugados = partidos.filter(estaJugado).length;
 
-      document.getElementById("totalPartidos").textContent = partidos.length;
       document.getElementById("partidosJugados").textContent = jugados;
-      document.getElementById("partidosPendientes").textContent = partidos.length - jugados;
     }
 
-    function filtrar(tipo, boton) {
-      filtroActual = tipo;
+    function filtrarPartidos(tipo, boton) {
+      filtroPartidos = tipo;
 
-      document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".filters button").forEach(b => b.classList.remove("active"));
       boton.classList.add("active");
 
-      renderResultados();
+      renderPartidos();
     }
 
-    async function cargarResultados() {
+    function mostrarError(mensaje) {
+      const box = document.getElementById("errorBox");
+      box.style.display = "block";
+      box.textContent = mensaje;
+    }
+
+    async function cargarResultadosOnline() {
       try {
-        const response = await fetch(FUENTE + "?cacheBust=" + Date.now(), {
+        const response = await fetch(FUENTE_OPENFOOTBALL + "?v=" + Date.now(), {
           cache: "no-store"
         });
 
-        if (!response.ok) {
-          throw new Error("No se pudo leer la fuente online.");
-        }
+        if (!response.ok) throw new Error("No se pudo leer OpenFootball.");
 
         const data = await response.json();
         const encontrados = buscarMatches(data);
 
-        partidos = encontrados.map((item, index) => {
-          return normalizarMatch(item.match, index, item.grupoPadre);
-        });
+        let normalizados = encontrados
+          .map((item, index) => normalizarMatch(item.match, index, item.grupoPadre))
+          .filter(p => p.n >= 1 && p.n <= 72);
 
-        partidos.sort((a, b) => Number(a.n) - Number(b.n));
+        if (!normalizados.length) {
+          normalizados = resultadosFallback;
+        }
 
-        actualizarFechaHora();
-        renderResultados();
+        partidos = normalizados.sort((a, b) => a.n - b.n);
 
       } catch (error) {
-        console.error(error);
-
-        const errorBox = document.getElementById("errorBox");
-        errorBox.style.display = "block";
-        errorBox.textContent = "No se pudo cargar la información online desde OpenFootball.";
-
-        document.getElementById("tablaResultados").innerHTML =
-          `<tr><td colspan="8">Error cargando datos online.</td></tr>`;
-
-        actualizarFechaHora();
+        partidos = resultadosFallback;
+        mostrarError("No se pudo leer la fuente online. Se usaron resultados oficiales de respaldo cargados en la página.");
       }
+
+      actualizarFechaHora();
+      renderPartidos();
+      calcularRanking();
     }
 
-    renderRanking();
-    cargarResultados();
+    cargarResultadosOnline();
   </script>
 </body>
 </html>
